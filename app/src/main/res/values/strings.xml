@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Youtube search</string>
+    <string name="search_placeholder">Enter a text to search</string>
+    <string name="search_button">Search</string>
+    <string name="title_placeholder">Title</string>
+    <string name="subtitle_placeholder">subtitle</string>
+</resources>
