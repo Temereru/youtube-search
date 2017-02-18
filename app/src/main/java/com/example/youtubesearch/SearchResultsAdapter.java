@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public class SearchResultsAdapter extends ArrayAdapter<SearchResult> {
 
-    private static Context mContext;
+    private Context mContext;
 
     public SearchResultsAdapter(Context context, ArrayList<SearchResult> searchResults) {
         super(context, 0, searchResults);
@@ -42,17 +42,5 @@ public class SearchResultsAdapter extends ArrayAdapter<SearchResult> {
         Glide.with(mContext).load(searchResult.thumbnailUrl).into(thumbnail);
 
         return convertView;
-    }
-
-    private static Bitmap getTumbnail(String tumbnailUri){
-        Bitmap largeIcon = null;
-        try {
-            largeIcon = BitmapFactory.decodeStream(new URL(tumbnailUri).openConnection().getInputStream());
-            return largeIcon;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 }
