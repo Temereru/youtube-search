@@ -4,9 +4,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -32,35 +35,93 @@ public class MainActivity extends AppCompatActivity {
     public final static String API_KEY = "&key=AIzaSyCWWvMYqP3iLAH5mV_efCBRU4y0FVIYapQ";
     public final static String YOUTUBE_NEXT_PAGE_BASE = "&pageToken=";
 
+    private String LAST_SEARCH = "";
     private String NEXT_PAGE = "";
+    private String SEARCH_URL = "";
+
+    private Boolean FLAG_LOADING = false;
+
+    private SearchResultsAdapter mSearchResultAdapter;
+    private ProgressBar spinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mSearchResultAdapter = new SearchResultsAdapter(this);
 
+        spinner = (ProgressBar) findViewById(R.id.search_loader);
+
+        ListView listView = (ListView) findViewById(R.id.result_list);
+        listView.setAdapter(mSearchResultAdapter);
+
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if(firstVisibleItem + visibleItemCount >= totalItemCount - 5 && totalItemCount != 0) {
+
+                    if (!FLAG_LOADING) {
+                        FLAG_LOADING = true;
+                        try {
+                            searchYoutube(SEARCH_URL, NEXT_PAGE);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                }
+            }
+        });
     }
 
     public void searchClicked(View view) {
         EditText searchText = (EditText) findViewById(R.id.search_text);
+        String searchTextText = searchText.getText().toString();
 
-        try {
-            searchYoutube(searchText.getText().toString());
-        } catch (JSONException e) {
-            Log.e(TAG, e.getLocalizedMessage());
+        hideSoftKeyBoard();
+
+        if (!LAST_SEARCH.equals(searchTextText)) {
+            try {
+                LAST_SEARCH = searchTextText;
+                NEXT_PAGE = "";
+                SEARCH_URL = "";
+                mSearchResultAdapter.clear();
+                FLAG_LOADING = true;
+                spinner.setVisibility(View.VISIBLE);
+                searchYoutube(searchTextText, "");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
+
 
     }
 
-    public void searchYoutube(String searchText) throws JSONException {
-        String requestUrl = YOUTUBE_SEARCH_BASE +
-                            YOUTUBE_SEARCH_ORDER +
-                            YOUTUBE_SEARCH_Q +
-                            searchText +
-                            YOUTUBE_SEARCH_TYPE +
-                            YOUTUBE_MAX_RESULTS +
-                            API_KEY;
+    public void searchYoutube(String searchText, String nextPage) throws JSONException {
+        String requestUrl;
+        if (SEARCH_URL.equals("")) {
+            requestUrl = YOUTUBE_SEARCH_BASE +
+                    YOUTUBE_SEARCH_ORDER +
+                    YOUTUBE_SEARCH_Q +
+                    searchText +
+                    YOUTUBE_SEARCH_TYPE +
+                    YOUTUBE_MAX_RESULTS +
+                    API_KEY;
+
+            SEARCH_URL = requestUrl;
+        } else {
+            requestUrl = SEARCH_URL;
+        }
+
+        if (!nextPage.equals("")) {
+            requestUrl += nextPage;
+        }
 
         Log.v(TAG, "searchYoutube: " + requestUrl);
 
@@ -71,9 +132,20 @@ public class MainActivity extends AppCompatActivity {
 
                 JsonObject rootResponse = parser.parse(response).getAsJsonObject();
                 JsonArray items = rootResponse.getAsJsonArray("items");
+                JsonElement nextPageTokenElement = rootResponse.get("nextPageToken");
+                if (nextPageTokenElement != null) {
+                    String nextPageToken = nextPageTokenElement.getAsString();
+
+                    NEXT_PAGE = YOUTUBE_NEXT_PAGE_BASE + nextPageToken;
+                } else {
+                    NEXT_PAGE = "";
+                }
 
                 if (items.size() != 0) {
                     displayResults(items);
+                } else {
+                    FLAG_LOADING = false;
+                    spinner.setVisibility(View.GONE);
                 }
 
                 Log.d(TAG, "onSuccess: object: " + items.toString());
@@ -81,6 +153,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, String errorMessage, Throwable throwable) {
+                FLAG_LOADING = false;
+                spinner.setVisibility(View.GONE);
                 Log.e(TAG, "onFailure " + statusCode + " " + errorMessage, throwable);
             }
         });
@@ -99,10 +173,17 @@ public class MainActivity extends AppCompatActivity {
             list.add(new SearchResult(thumbnailUrl, title, subtitle));
         }
 
-        SearchResultsAdapter adapter = new SearchResultsAdapter(this, list);
+        mSearchResultAdapter.addAll(list);
+        FLAG_LOADING = false;
+        spinner.setVisibility(View.GONE);
+    }
 
-        ListView listView = (ListView) findViewById(R.id.result_list);
-        listView.setAdapter(adapter);
+    private void hideSoftKeyBoard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+
+        if(imm.isAcceptingText()) { // verify if the soft keyboard is open
+            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        }
     }
 
 }

@@ -19,6 +19,11 @@ public class SearchResultsAdapter extends ArrayAdapter<SearchResult> {
 
     private Context mContext;
 
+    public SearchResultsAdapter(Context context) {
+        super(context, 0);
+        mContext = context;
+    }
+
     public SearchResultsAdapter(Context context, ArrayList<SearchResult> searchResults) {
         super(context, 0, searchResults);
         mContext = context;
