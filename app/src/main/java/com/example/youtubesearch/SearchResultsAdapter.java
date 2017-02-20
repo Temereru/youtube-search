@@ -37,6 +37,8 @@ public class SearchResultsAdapter extends ArrayAdapter<SearchResult> {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.result_item, parent, false);
         }
 
+        convertView.setTag(searchResult.videoId);
+
         ImageView thumbnail = (ImageView) convertView.findViewById(R.id.thumbnail);
         TextView title = (TextView) convertView.findViewById(R.id.title);
         TextView subTitle = (TextView) convertView.findViewById(R.id.subtitle);

@@ -1,5 +1,6 @@
 package com.example.youtubesearch;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,8 +33,9 @@ public class MainActivity extends AppCompatActivity {
     public final static String YOUTUBE_SEARCH_Q = "&q=";
     public final static String YOUTUBE_SEARCH_TYPE = "&type=video";
     public final static String YOUTUBE_MAX_RESULTS = "&maxResults=10";
-    public final static String API_KEY = "&key=AIzaSyCWWvMYqP3iLAH5mV_efCBRU4y0FVIYapQ";
+    public final static String API_KEY = "&key=" + Config.YOUTUBE_API_KEY;
     public final static String YOUTUBE_NEXT_PAGE_BASE = "&pageToken=";
+    public final static String EXTRA_MESSAGE = "com.example.youtubesearch.MESSAGE";
 
     private String LAST_SEARCH = "";
     private String NEXT_PAGE = "";
@@ -99,8 +101,6 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-
-
     }
 
     public void searchYoutube(String searchText, String nextPage) throws JSONException {
@@ -170,7 +170,8 @@ public class MainActivity extends AppCompatActivity {
             String title = snippet.get("title").getAsString();
             String subtitle = snippet.get("description").getAsString();
             String thumbnailUrl = snippet.getAsJsonObject("thumbnails").getAsJsonObject("default").get("url").getAsString();
-            list.add(new SearchResult(thumbnailUrl, title, subtitle));
+            String videoId = result.getAsJsonObject("id").get("videoId").getAsString();
+            list.add(new SearchResult(thumbnailUrl, title, subtitle, videoId));
         }
 
         mSearchResultAdapter.addAll(list);
@@ -186,4 +187,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void videoClicked(View view) {
+        Log.i(TAG, "videoClicked");
+        String videoObject = view.getTag().toString();
+
+        Intent videoPageIntent = new Intent(this, VideoPageActivity.class);
+        videoPageIntent.putExtra(EXTRA_MESSAGE, videoObject);
+        startActivity(videoPageIntent);
+    }
 }

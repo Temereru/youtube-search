@@ -4,4 +4,5 @@
     <string name="search_button">Search</string>
     <string name="title_placeholder">Title</string>
     <string name="subtitle_placeholder">subtitle</string>
+    <string name="player_error">Error initializing YouTube Player: %s</string>
 </resources>
